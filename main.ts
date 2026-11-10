@@ -1,39 +1,8 @@
-import * as filters from "./filters.js";
-
 type Pixel = [number, number, number];
 type Image = any | Pixel[][];
 
-const rgb: Image = [
 
-    [
-        [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 0, 255]
-    ],
-
-    [
-        [255, 255, 0], [0, 255, 255], [255, 0, 255], [0, 0, 255]
-    ],
-
-    [
-
-        [255, 1, 0], [128, 128, 128], [255, 255, 255], [0, 0, 255]
-    ],
-
-    [
-
-        [255, 1, 0], [128, 128, 128], [255, 255, 255], [0, 0, 255]
-    ]
-
-];// /rgb
-
-const grayscale: Image = [
-
-    [255, 1, 1],
-    [1, 255, 1],
-    [1, 1, 255],
-
-];// /grayscale
-
-const normalization = (data: Image) => {
+export const normalization = (data: Image) => {
 
     if (Array.isArray(data) && data.length > 0) {
 
@@ -67,7 +36,7 @@ const normalization = (data: Image) => {
 
 }// /normalization
 
-const padding = (data: Image, numberOfRows: number, numberOfColumns: number, type = "coolred") => {
+export const padding = (data: Image, numberOfRows: number, numberOfColumns: number, type = "coolred") => {
 
     if (Array.isArray(data) && data.length > 0 && (numberOfRows > 0 || numberOfColumns > 0)) {
 
@@ -151,7 +120,7 @@ const padding = (data: Image, numberOfRows: number, numberOfColumns: number, typ
 
 }// /padd
 
-const maxPoolingCoolered = (data: number[][][], poolSize = 2, stride = 2) => {
+export const maxPoolingCoolered = (data: number[][][], poolSize = 2, stride = 2) => {
 
     const height = data.length;
     const width = data[0].length;
@@ -199,7 +168,7 @@ const maxPoolingCoolered = (data: number[][][], poolSize = 2, stride = 2) => {
 
 }// /maxPooling
 
-const maxPoolingGray = (data: number[][], poolSize = 2, stride = 2) => {
+export const maxPoolingGray = (data: number[][], poolSize = 2, stride = 2) => {
 
     const height = data.length;
     const width = data[0].length;
@@ -247,7 +216,7 @@ const maxPoolingGray = (data: number[][], poolSize = 2, stride = 2) => {
 
 }// /maxPoolingGray
 
-const maxPooling = (data: Image, poolSize = 2, stride = 2, type = "coolred") => {
+export const maxPooling = (data: Image, poolSize = 2, stride = 2, type = "coolred") => {
 
     if (type === "coolred") {
 
@@ -265,7 +234,7 @@ const maxPooling = (data: Image, poolSize = 2, stride = 2, type = "coolred") => 
 
 }// /maxPoolingAll
 
-const flattenColor = (data: number[][][]) => {
+export const flattenColor = (data: number[][][]) => {
 
     const result: number[] = [];
 
@@ -281,7 +250,7 @@ const flattenColor = (data: number[][][]) => {
 
 }// /flattenColor
 
-const flattenGray = (data: number[][]) => {
+export const flattenGray = (data: number[][]) => {
 
     const result: number[] = [];
 
@@ -299,7 +268,7 @@ const flattenGray = (data: number[][]) => {
 
 }// /flattenGray
 
-const flatten = (data: Image, type = "coolred") => {
+export const flatten = (data: Image, type = "coolred") => {
 
     if (type === "coolred") {
 
@@ -315,7 +284,7 @@ const flatten = (data: Image, type = "coolred") => {
 
 }// /flatten
 
-const buildFilter = (flat: number[], channels: number): number[][][] => {
+export const buildFilter = (flat: number[], channels: number): number[][][] => {
 
     const k = Math.sqrt(flat.length);
 
@@ -345,7 +314,19 @@ const buildFilter = (flat: number[], channels: number): number[][][] => {
 
 }// /buildFilter
 
-const printGray = (data: number[][]) => {
+export const buildColorFilter = (weights: number[]): number[][][] => {
+
+    const depth: number[] = [];
+
+    for (let c = 0; c < weights.length; c++) {
+        depth.push(weights[c]);
+    }// /for
+
+    return [[depth]];
+
+}// /buildColorFilter
+
+export const printGray = (data: number[][]) => {
 
     let maxLength = 0;
 
@@ -376,7 +357,7 @@ const printGray = (data: number[][]) => {
 
 }// /printGray
 
-const printColor = (data: number[][][]) => {
+export const printColor = (data: number[][][]) => {
 
     let output = "";
 
@@ -397,9 +378,166 @@ const printColor = (data: number[][][]) => {
 
 }// /printColor
 
+export const relu = (data: number[][][]) => {
 
-console.log("Original RGB Image:" , buildFilter(filters.verticalGray, 4));
+    const result: number[][][] = [];
 
-const result = maxPooling(padding(normalization(rgb), 1, 1, "coolred"), 2, 2, "coolred");
-printColor(result);
-console.log(flatten(result, "coolred"));
+    for (let i = 0; i < data.length; i++) {
+
+        const row: number[][] = [];
+
+        for (let j = 0; j < data[i].length; j++) {
+
+            const pixel: number[] = [];
+
+            for (let c = 0; c < data[i][j].length; c++) {
+                pixel.push(Math.max(0, data[i][j][c]));
+            }// /for
+
+            row.push(pixel);
+
+        }// /for
+
+        result.push(row);
+
+    }// /for
+
+    return result;
+
+}// /relu
+
+export const convolution = (data: Image, filter: number[][][], type = "coolred", stepRow: number = 1, stepCol: number = 1) => {
+
+    if (type !== "coolred" && type !== "grayscale") {
+        console.log("type is not coolred or grayscale");
+        return data;
+    }// /if
+
+    const isColor = type === "coolred";
+    const channels = isColor ? data[0][0].length : 1;
+
+    const filterRows = filter.length;
+    const filterCols = filter[0].length;
+
+    const totalRows = data.length;
+    const totalCols = data[0].length;
+
+    let extraRows = 0;
+    let extraCols = 0;
+
+    if (totalRows < filterRows) {
+        extraRows = filterRows - totalRows;
+    } else {
+        extraRows = (stepRow - ((totalRows - filterRows) % stepRow)) % stepRow;
+    }// /if
+
+    if (totalCols < filterCols) {
+        extraCols = filterCols - totalCols;
+    } else {
+        extraCols = (stepCol - ((totalCols - filterCols) % stepCol)) % stepCol;
+    }// /if
+
+    const padded: any[][] = [];
+
+    for (let i = 0; i < totalRows; i++) {
+
+        const row: any[] = [...data[i]];
+
+        for (let j = 0; j < extraCols; j++) {
+
+            if (isColor) {
+
+                const zeroPixel: number[] = [];
+
+                for (let c = 0; c < channels; c++) {
+                    zeroPixel.push(0);
+                }// /for
+
+                row.push(zeroPixel);
+
+            } else {
+                row.push(0);
+            }// /if
+
+        }// /for
+
+        padded.push(row);
+
+    }// /for
+
+    for (let i = 0; i < extraRows; i++) {
+
+        const zeroRow: any[] = [];
+
+        for (let j = 0; j < totalCols + extraCols; j++) {
+
+            if (isColor) {
+
+                const zeroPixel: number[] = [];
+
+                for (let c = 0; c < channels; c++) {
+                    zeroPixel.push(0);
+                }// /for
+
+                zeroRow.push(zeroPixel);
+
+            } else {
+                zeroRow.push(0);
+            }// /if
+
+        }// /for
+
+        padded.push(zeroRow);
+
+    }// /for
+
+    const result: number[][] = [];
+
+    let lastEndRow = 0;
+    let lastEndCol = 0;
+
+    let startRow = 0;
+
+    while (startRow + filterRows <= padded.length) {
+
+        const resultRow: number[] = [];
+
+        let startCol = 0;
+
+        while (startCol + filterCols <= padded[0].length) {
+
+            let sum = 0;
+
+            for (let m = 0; m < filterRows; m++) {
+                for (let n = 0; n < filterCols; n++) {
+
+                    const cell = padded[startRow + m][startCol + n];
+
+                    if (isColor) {
+                        for (let c = 0; c < channels; c++) {
+                            sum += cell[c] * filter[m][n][c];
+                        }// /for
+                    } else {
+                        sum += cell * filter[m][n][0];
+                    }// /if
+
+                }// /for
+            }// /for
+
+            resultRow.push(sum);
+
+            lastEndCol = startCol + filterCols - 1;
+            startCol = lastEndCol - filterCols + 1 + stepCol;
+
+        }// /while
+
+        result.push(resultRow);
+
+        lastEndRow = startRow + filterRows - 1;
+        startRow = lastEndRow - filterRows + 1 + stepRow;
+
+    }// /while
+
+    return result;
+
+}// /convolution

@@ -1,9 +1,12 @@
 {
+  "type": "module",
+  "dependencies": {
+    "sharp": "^0.34.0"
+  },
   "devDependencies": {
     "tsx": "^4.23.13"
   },
-
   "scripts": {
-    "dev": "tsx watch main.ts"
+    "dev": "tsx watch app.ts"
   }
 }
