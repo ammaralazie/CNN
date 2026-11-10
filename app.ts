@@ -34,7 +34,7 @@ const applyFilters = (image: number[][][], filterList: number[][], depth: number
 
     return stacked;
 
-}
+}// /applyFilters
 
 const scaleChannels = (data: number[][][]) => {
 
@@ -75,7 +75,7 @@ const scaleChannels = (data: number[][][]) => {
 
     return result;
 
-}
+}// /scaleChannels
 
 const groupOne = [
     filters.verticalGray,
@@ -84,7 +84,7 @@ const groupOne = [
     filters.sideLineVertical,
     filters.goalLineHorizontalTop,
     filters.ballRing
-];
+]// /groupOne
 
 const groupTwo = [
     filters.penaltyBoxCornerTL,
@@ -95,7 +95,7 @@ const groupTwo = [
     filters.penaltySpot,
     filters.arcTopLeft,
     filters.goalPostVertical
-];
+]// /groupTwo
 
 const extractFeatures = async (path: string) => {
 
@@ -112,7 +112,7 @@ const extractFeatures = async (path: string) => {
 
     return flattenColor(scaled);
 
-}
+}// /extractFeatures
 
 const vector = await extractFeatures("./files/1.webp");
 
